@@ -61,14 +61,26 @@ CHIP ALU {
     // negate output
     Not16(in=result, out=nresult);
     Mux16(a=result, b=nresult, sel=no, out=fresult);
-
-    // zr TODO: Get this to work
-    Not(in=fresult, out=zr);
+    Mux16(a=result, b=nresult, sel=no, out[0]=fr0, out[1]=fr1, 
+        out[2]=fr2, out[3]=fr3, out[4]=fr4, 
+        out[5]=fr5, out[6]=fr6, out[7]=fr7,
+        out[8]=fr8, out[9]=fr9, out[10]=fr10,
+        out[11]=fr11, out[12]=fr12, out[13]=fr13,
+        out[14]=fr14, out[15]=sign);
 
     // ng 
-    And(a=1, b=out[15], out=ng);
+    And(a=true, b=sign, out=ng);
+
+    // zr TODO: Get this to work
+    Or8Way(in[0]=fr0, in[1]=fr1, in[2]=fr2, in[3]=fr3, in[4]=fr4, in[5]=fr5,
+        in[6]=fr6, in[7]=fr7, out=p1);
+    Or8Way(in[0]=fr8, in[1]=fr9, in[2]=fr10, in[3]=fr11, in[4]=fr12, in[5]=fr13,
+        in[6]=fr14, in[7]=sign, out=p2);
+    Or(a=p1, b=p2, out=nzr);
+
+    Not(in=nzr, out=zr);
 
     //final out
-    Add16(a=fresult, b=0, sum=out);
+    Add16(a=fresult, b=false, out=out);
 
 }
