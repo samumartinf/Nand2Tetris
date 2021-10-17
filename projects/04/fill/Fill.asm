@@ -12,3 +12,59 @@
 // the screen should remain fully clear as long as no key is pressed.
 
 // Put your code here.
+// set end of screen
+@24576
+D = A
+@R0
+M = D
+@MAIN
+0;JMP
+
+(MAIN)
+    @count
+    M = 0
+    @KBD
+    D = M
+    @BLACKEN
+    D;JGT
+    @WHITEN
+    D;JMP
+
+(WHITEN)
+    @SCREEN
+    D = A
+    @count
+    D = D + M
+    @R0
+    D = M - D
+    @MAIN
+    D;JEQ //If we have parsed through the whole screen -> jump to main again
+    @SCREEN
+    D = A
+    @count
+    A = D + M  // Move to the next address for the screen
+    M = 0 // Set to black
+    @count 
+    M = M + 1
+    @WHITEN
+    0;JMP
+
+(BLACKEN)
+    @SCREEN
+    D = A
+    @count
+    D = D + M
+    @R0
+    D = M - D
+    @MAIN
+    D;JEQ //If we have parsed through the whole screen -> jump to main again
+    @SCREEN
+    D = A
+    @count
+    A = D + M  // Move to the next address for the screen
+    M = -1 // Set to black
+    @count 
+    M = M + 1
+    @BLACKEN
+    0;JMP
+    
