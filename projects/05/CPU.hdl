@@ -40,7 +40,6 @@ CHIP CPU {
 
     PARTS:
         /**
-        * Put your code here:
         * instructionformat: ixxa ccc ccc ddd jjj
         * i = opcode -> use A-instruction or C-instruction
         * xx ->  these are not used in out spec  
