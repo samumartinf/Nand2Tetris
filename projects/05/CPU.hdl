@@ -39,5 +39,52 @@ CHIP CPU {
         pc[15];          // address of next instruction
 
     PARTS:
-    // Put your code here:
+        /**
+        * Put your code here:
+        * instructionformat: ixxa ccc ccc ddd jjj
+        * i = opcode -> use A-instruction or C-instruction
+        * xx ->  these are not used in out spec  
+        * a -> if set (a == 1) it will use M[A] the value in memory address A, if not it will use A (address) directly
+        * cccccc -> computation to be done (will depend on 'a')
+        * ddd -> destination where the output of the ALU should go 
+        * jjj -> jump condition, either go to memory location in load, reset or PC++
+        */
+
+        // Circuit for the PC logic jjj are positions [13-15] in the instruction
+        Not(in=ng, out=notng);
+        And(a=ng, b=instruction[13], out=ngandj0);
+        And(a=notng, b=instruction[15], out=notngandj2);
+        Or(a=notngandj2, b=ngandj0, out=loadin1);
+        And(a=zr, b=instruction[14], out=zrandj1);
+        Or(a=zrandj1, b=loadin1, out=jumptoA);
+
+
+        // Overall architecture -> refer figure 5.8
+        Register(in=registerAin, load=instruction[10], out=Aregoutput);
+        Mux16(a=Aregoutput, b=inM, sel=instruction[3], out=ALUiny); 
+        Mux16(a=ALUout, b=instruction, sel=instruction[0], out=registerAin);
+        Register(in=ALUout, load=instruction[11], out=ALUinx); //  D = ALUinx
+        PC(in=Aregoutput, load=jumptoA, inc=true, reset=reset, out=pcout);
+
+        // for the ALU x=D y=M/A depending on 'a'
+        // for the ALU cccccc = instruction[4..9] = zx, nx, zy, ny, f, no
+        ALU(
+            x=ALUinx, 
+            y=ALUiny, 
+            zx=instruction[4], 
+            nx=instruction[5], 
+            zy=instruction[6], 
+            ny=instruction[7], 
+            f=instruction[8], 
+            no=instruction[9], 
+            out=ALUout, 
+            zr=zr, 
+            ng=ng);
+
+        // connect outputs
+        writeM = instruction[12];
+        outM = ALUout;
+        addressM = Aregoutput[0..14]; // needs to be 15 bit
+        pc = pcout[0..14]; // needs to be 15 bit
+
 }

@@ -71,7 +71,7 @@ CHIP ALU {
     // ng 
     And(a=true, b=sign, out=ng);
 
-    // zr TODO: Get this to work
+    // zr
     Or8Way(in[0]=fr0, in[1]=fr1, in[2]=fr2, in[3]=fr3, in[4]=fr4, in[5]=fr5,
         in[6]=fr6, in[7]=fr7, out=p1);
     Or8Way(in[0]=fr8, in[1]=fr9, in[2]=fr10, in[3]=fr11, in[4]=fr12, in[5]=fr13,
