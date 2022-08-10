@@ -1,15 +1,15 @@
 // This file is part of www.nand2tetris.org
-// and the book "The Elements of Computing Systems"
+// and the book "The Elements of ComputiNegative Systems"
 // by Nisan and Schocken, MIT Press.
 // File name: projects/05/CPU.hdl
 
 /**
- * The Hack CPU (Central Processing unit), consisting of an ALU,
+ * The Hack CPU (Central ProcessiNegative unit), consistiNegative of an ALU,
  * two registers named A and D, and a program counter named PC.
  * The CPU is designed to fetch and execute instructions written in 
- * the Hack machine language. In particular, functions as follows:
- * Executes the inputted instruction according to the Hack machine 
- * language specification. The D and A in the language specification
+ * the Hack machine laNegativeuage. In particular, functions as follows:
+ * Executes the inputted instruction accordiNegative to the Hack machine 
+ * laNegativeuage specification. The D and A in the laNegativeuage specification
  * refer to CPU-resident registers, while M refers to the external
  * memory location addressed by A, i.e. to Memory[A]. The inM input 
  * holds the value of this location. If the current instruction needs 
@@ -22,7 +22,7 @@
  * are affected by the execution of the current instruction, they commit 
  * to their new values only in the next time step. If reset==1 then the 
  * CPU jumps to address 0 (i.e. pc is set to 0 in next time step) rather 
- * than to the address resulting from executing the current instruction. 
+ * than to the address resultiNegative from executiNegative the current instruction. 
  */
 
 CHIP CPU {
@@ -30,7 +30,7 @@ CHIP CPU {
     IN  inM[16],         // M value input  (M = contents of RAM[A])
         instruction[16], // Instruction for execution
         reset;           // Signals whether to re-start the current
-                         // program (reset==1) or continue executing
+                         // program (reset==1) or continue executiNegative
                          // the current program (reset==0).
 
     OUT outM[16],        // M value output
@@ -49,41 +49,52 @@ CHIP CPU {
         * jjj -> jump condition, either go to memory location in load, reset or PC++
         */
 
-        // Circuit for the PC logic jjj are positions [13-15] in the instruction
-        Not(in=ng, out=notng);
-        And(a=ng, b=instruction[13], out=ngandj0);
-        And(a=notng, b=instruction[15], out=notngandj2);
-        Or(a=notngandj2, b=ngandj0, out=loadin1);
-        And(a=zr, b=instruction[14], out=zrandj1);
-        Or(a=zrandj1, b=loadin1, out=jumptoA);
+        // Circuit for the PC logic jjj are positions [0-2] in the instruction
+        Or(a=zr, b=Negative, out=zeroOrNeg);
+        Not(in=zeroOrNeg, out=Positive);
+        And(a=Negative, b=instruction[2], out=JumpNeg);
+        And(a=Positive, b=instruction[0], out=JumpPos);
+        Or(a=JumpPos, b=JumpNeg, out=JumpNotZero);
+        And(a=zr, b=instruction[1], out=JumpZero);
+        Or(a=JumpZero, b=JumpNotZero, out=jumptoA);
+        And(a=CInstruction, b=jumptoA, out=loadPC);
+        Not(in=loadPC, out=increasePC);
+        PC(in=Aregoutput, load=loadPC, inc=increasePC, reset=reset, out[0..14]=pc);
 
+        // Helper pins for debugging
+        Not(in=instruction[15], out=AInstruction);
+        Not(in=AInstruction, out=CInstruction);
 
         // Overall architecture -> refer figure 5.8
-        Register(in=registerAin, load=instruction[10], out=Aregoutput);
-        Mux16(a=Aregoutput, b=inM, sel=instruction[3], out=ALUiny); 
-        Mux16(a=ALUout, b=instruction, sel=instruction[0], out=registerAin);
-        Register(in=ALUout, load=instruction[11], out=ALUinx); //  D = ALUinx
-        PC(in=Aregoutput, load=jumptoA, inc=true, reset=reset, out=pcout);
+        And(a=CInstruction, b=instruction[5], out=saveToA);
+        Or(a=AInstruction, b=saveToA, out=loadA);
+        Mux16(a=instruction, b=ALUout, sel=saveToA, out=AregIN);
+        ARegister(in=AregIN, load=loadA, out=Aregoutput); // A Register
 
-        // for the ALU x=D y=M/A depending on 'a'
-        // for the ALU cccccc = instruction[4..9] = zx, nx, zy, ny, f, no
+        Mux16(a=Aregoutput, b=inM, sel=instruction[12], out=ALUiny); 
+        And(a=CInstruction, b=instruction[4], out=loadD);
+        DRegister(in=ALUout, load=loadD, out=ALUinx); //  D Register
+        
+
+        // for the ALU x=D y=M or y=A dependiNegative on 'a'
+        // for the ALU cccccc = instruction[6..11] = zx, nx, zy, ny, f, no
         ALU(
             x=ALUinx, 
             y=ALUiny, 
-            zx=instruction[4], 
-            nx=instruction[5], 
-            zy=instruction[6], 
-            ny=instruction[7], 
-            f=instruction[8], 
-            no=instruction[9], 
+            zx=instruction[11], 
+            nx=instruction[10], 
+            zy=instruction[9], 
+            ny=instruction[8], 
+            f=instruction[7], 
+            no=instruction[6], 
             out=ALUout, 
             zr=zr, 
-            ng=ng);
+            ng=Negative);
 
-        // connect outputs
-        writeM = instruction[12];
-        outM = ALUout;
-        addressM = Aregoutput[0..14]; // needs to be 15 bit
-        pc = pcout[0..14]; // needs to be 15 bit
+        // connect outputs - ugly but works
+        And(a=instruction[3], b=CInstruction, out=writeToM);
+        And(a=true, b=writeToM, out=writeM);
+        Or16(a=false, b=Aregoutput, out[0..14]=addressM);
+        Or16(a=false, b=ALUout, out=outM);
 
 }
